@@ -10,14 +10,14 @@
 		"Other"
 	],
 	"activationEvents": [
-		"onCommand:openrelatedjsts.helloWorld"
+		"onCommand:openrelatedjsts.openFile"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
 		"commands": [
 			{
-				"command": "openrelatedjsts.helloWorld",
-				"title": "Hello World"
+				"command": "openrelatedjsts.openFile",
+				"title": "Open Related JS/TS File"
 			}
 		]
 	},
