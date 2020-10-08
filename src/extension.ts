@@ -15,6 +15,7 @@ export function activate(context: vscode.ExtensionContext) {
 			const rootPath = folders[0].uri.fsPath;
 			
 			const files = await getMatchingFiles(currentDocLang, currentDocPath);
+			console.log('files', files);
 			if (files.length === 1) {
 				const doc = await vscode.workspace.openTextDocument(files[0].path);
 				vscode.window.showTextDocument(doc);
@@ -44,7 +45,7 @@ function getDocLanguage(activeTextEditor: vscode.TextEditor): LanguageId {
 async function getMatchingFiles(currentDocLang: LanguageId, currentDocPath: string): Promise<vscode.Uri[]> {
 	return new Promise(resolve => {
 		let pathComponents = currentDocPath.split(/\/|\\/);
-		let searchString = '**/' + pathComponents[pathComponents.length - 1].slice(0, -2) + (currentDocLang === LanguageId.typescript ? 'js' : 'ts'); 
+		let searchString = `**/${pathComponents[pathComponents.length - 1].split('.')[0]}**${(currentDocLang === LanguageId.typescript ? 'js' : 'ts')}`; 
 		vscode.workspace.findFiles(searchString)
 			.then(files => {
 				resolve(files);
