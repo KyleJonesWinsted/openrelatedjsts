@@ -1,5 +1,4 @@
 
-import { TextDecoder } from 'util';
 import * as vscode from 'vscode';
 
 export function activate(context: vscode.ExtensionContext) {
@@ -14,18 +13,20 @@ async function openRelated() {
 	try {
 		const { currentDocLang, currentDocPath, rootPath } = getEnvironment();
 
-		const packageFile: vscode.TextDocument | null = await getPackageFile(currentDocPath);
+		const configFile: vscode.TextDocument | null = await getConfigFile(currentDocPath);
 
-		console.log('packagefile', packageFile);
+		console.log('configfile', configFile);
 
-		if (!packageFile) {
+		if (!configFile) {
 			await openFileByNameOnly(currentDocLang, currentDocPath);
 			return;
 		}
 
-		// const { outDir, rootDir } = getPathsFromPackage(packageFile);
+		const { outDir, rootDir } = getPathsFromConfig(configFile, rootPath);
 
-		// openFileByPath(currentDocLang, currentDocPath, outDir, rootDir);
+		console.log('outdir', outDir, 'rootdir', rootDir);
+
+		// openFileByPath(currentDocLang, currentDocPath, outDir);
 		
 	} catch (err) {
 		console.error('Error in openFile: ', err);
@@ -37,15 +38,26 @@ function openFileByPath(currentDocLang: LanguageId, currentDocPath: string, outD
 
 }
 
-function getPathsFromPackage(packageFile: vscode.TextDocument) {
-
+function getPathsFromConfig(configFile: vscode.TextDocument, rootPath: string) {
+	const json = JSON.parse(configFile.getText());
+	const paths: {[key: string]: string} = {
+		outDir: json.compilerOptions?.outDir ?? '.',
+		rootDir: json.compilerOptions?.rootDir ?? '.',
+	};
+	Object.keys(paths).forEach(key => {
+		const value = paths[key];
+		if (value[0] === '.') {
+			paths[key] = rootPath + value.slice(1, value.length);
+		}
+	});
+	return paths;
 }
 
-async function getPackageFile(currentDocPath: string): Promise<vscode.TextDocument | null> {
+async function getConfigFile(currentDocPath: string): Promise<vscode.TextDocument | null> {
 	let pathComponents = currentDocPath.split('/');
 	let doc: vscode.TextDocument | null = null;
 	while (pathComponents.length > 0 && doc === null) {
-		const searchString = `${pathComponents.join('/')}/package.json`;
+		const searchString = `${pathComponents.join('/')}/tsconfig.json`;
 		try {
 			doc = await vscode.workspace.openTextDocument(searchString);
 		} catch (err) {
