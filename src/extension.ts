@@ -9,13 +9,11 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 async function openRelated() {
-	vscode.window.showInformationMessage('ran the open file command');
+	vscode.window.showInformationMessage('Opening file...');
 	try {
 		const { currentDocLang, currentDocPath, rootPath } = getEnvironment();
 
 		const configFile: vscode.TextDocument | null = await getConfigFile(currentDocPath);
-
-		console.log('configfile', configFile);
 
 		if (!configFile) {
 			await openFileByNameOnly(currentDocLang, currentDocPath);
@@ -24,18 +22,35 @@ async function openRelated() {
 
 		const { outDir, rootDir } = getPathsFromConfig(configFile, rootPath);
 
-		console.log('outdir', outDir, 'rootdir', rootDir);
-
-		// openFileByPath(currentDocLang, currentDocPath, outDir);
+		await openFileByPath(currentDocLang, currentDocPath, outDir, rootDir);
 		
 	} catch (err) {
 		console.error('Error in openFile: ', err);
-		vscode.window.showErrorMessage('Error: ' + err);
+		vscode.window.showErrorMessage('Open Related: ' + err);
 	}
 }
 
-function openFileByPath(currentDocLang: LanguageId, currentDocPath: string, outDir: string, rootDir: string) {
-
+async function openFileByPath(currentDocLang: LanguageId, currentDocPath: string, outDir: string, rootDir: string) {
+	let fileExtension = '.js';
+	if (currentDocLang === LanguageId.javascript) {
+		const buffer = outDir;
+		outDir = rootDir;
+		rootDir = buffer;
+		fileExtension = '.ts';
+	}
+	const filePath = outDir + currentDocPath.replace(rootDir, '').split('.')[0] + fileExtension;
+	try {
+		const doc = await vscode.workspace.openTextDocument(filePath);
+		vscode.window.showTextDocument(doc);
+	} catch {
+		try {
+			const declarationFilePath = filePath.slice(0, filePath.length - 2) + 'd.ts';
+			const doc = await vscode.workspace.openTextDocument(declarationFilePath);
+			vscode.window.showTextDocument(doc);
+		} catch {
+			await openFileByNameOnly(currentDocLang, currentDocPath);
+		}
+	}
 }
 
 function getPathsFromConfig(configFile: vscode.TextDocument, rootPath: string) {
