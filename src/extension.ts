@@ -1,33 +1,82 @@
 
+import { TextDecoder } from 'util';
 import * as vscode from 'vscode';
 
 export function activate(context: vscode.ExtensionContext) {
 
-	let openFile = vscode.commands.registerCommand('openrelatedjsts.openFile', async () => {
-		vscode.window.showInformationMessage('ran the open file command');
-		const activeTextEditor = vscode.window.activeTextEditor;
-		if (!activeTextEditor) { return; }
-		try {
-			const currentDocLang = getDocLanguage(activeTextEditor);
-			const currentDocPath = activeTextEditor.document.uri.fsPath;
-			const folders = vscode.workspace.workspaceFolders;
-			if (!folders || folders.length < 1) { return; }
-			const rootPath = folders[0].uri.fsPath;
-			
-			const files = await getMatchingFiles(currentDocLang, currentDocPath);
-			console.log('files', files);
-			if (files.length === 1) {
-				const doc = await vscode.workspace.openTextDocument(files[0].path);
-				vscode.window.showTextDocument(doc);
-			}
-			
-		} catch (err) {
-			console.error('Error in openFile: ', err);
-			vscode.window.showErrorMessage('Error: ' + err);
-		}
-	});
+	let openFile = vscode.commands.registerCommand('openrelatedjsts.openFile', openRelated);
 
 	context.subscriptions.push(openFile);
+}
+
+async function openRelated() {
+	vscode.window.showInformationMessage('ran the open file command');
+	try {
+		const { currentDocLang, currentDocPath, rootPath } = getEnvironment();
+
+		const packageFile: vscode.TextDocument | null = await getPackageFile(currentDocPath);
+
+		console.log('packagefile', packageFile);
+
+		if (!packageFile) {
+			await openFileByNameOnly(currentDocLang, currentDocPath);
+			return;
+		}
+
+		// const { outDir, rootDir } = getPathsFromPackage(packageFile);
+
+		// openFileByPath(currentDocLang, currentDocPath, outDir, rootDir);
+		
+	} catch (err) {
+		console.error('Error in openFile: ', err);
+		vscode.window.showErrorMessage('Error: ' + err);
+	}
+}
+
+function openFileByPath(currentDocLang: LanguageId, currentDocPath: string, outDir: string, rootDir: string) {
+
+}
+
+function getPathsFromPackage(packageFile: vscode.TextDocument) {
+
+}
+
+async function getPackageFile(currentDocPath: string): Promise<vscode.TextDocument | null> {
+	let pathComponents = currentDocPath.split('/');
+	let doc: vscode.TextDocument | null = null;
+	while (pathComponents.length > 0 && doc === null) {
+		const searchString = `${pathComponents.join('/')}/package.json`;
+		try {
+			doc = await vscode.workspace.openTextDocument(searchString);
+		} catch (err) {
+			pathComponents.pop();
+			continue;
+		}
+	}
+	return doc;
+}
+
+function getEnvironment(): { currentDocLang: LanguageId, currentDocPath: string, rootPath: string } {
+	const activeTextEditor = vscode.window.activeTextEditor;
+	if (!activeTextEditor) { throw new Error('No currently active text editor.'); }
+	const currentDocLang = getDocLanguage(activeTextEditor);
+	const currentDocPath = activeTextEditor.document.uri.fsPath;
+	const folders = vscode.workspace.workspaceFolders;
+	if (!folders || folders.length < 1) { throw new Error('Unable to open current workspace folder'); }
+	const rootPath = folders[0].uri.fsPath;
+	return { currentDocLang, currentDocPath, rootPath };
+}
+
+async function openFileByNameOnly(currentDocLang: LanguageId, currentDocPath: string) {
+	const files = await getMatchingFiles(currentDocLang, currentDocPath);
+	if (files.length > 1) {
+		throw new Error('Found too many potential matches.');
+	} else if (files.length < 1) {
+		throw new Error('Could not find matching file.');
+	} else {
+		const doc = await vscode.workspace.openTextDocument(files[0].path);
+		vscode.window.showTextDocument(doc);
+	}
 }
 
 function getDocLanguage(activeTextEditor: vscode.TextEditor): LanguageId {
@@ -43,14 +92,10 @@ function getDocLanguage(activeTextEditor: vscode.TextEditor): LanguageId {
 }
 
 async function getMatchingFiles(currentDocLang: LanguageId, currentDocPath: string): Promise<vscode.Uri[]> {
-	return new Promise(resolve => {
-		let pathComponents = currentDocPath.split(/\/|\\/);
-		let searchString = `**/${pathComponents[pathComponents.length - 1].split('.')[0]}**${(currentDocLang === LanguageId.typescript ? 'js' : 'ts')}`; 
-		vscode.workspace.findFiles(searchString)
-			.then(files => {
-				resolve(files);
-			});
-	});
+	let pathComponents = currentDocPath.split('/');
+	let searchString = `**/${pathComponents[pathComponents.length - 1].split('.')[0]}**${(currentDocLang === LanguageId.typescript ? 'js' : 'ts')}`; 
+	const files = await vscode.workspace.findFiles(searchString);
+	return files;
 }
 
 enum LanguageId {
