@@ -1,5 +1,6 @@
 
 import * as vscode from 'vscode';
+import * as CommentJSON from 'comment-json';
 
 export function activate(context: vscode.ExtensionContext) {
 
@@ -9,7 +10,6 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 async function openRelated() {
-	vscode.window.showInformationMessage('Opening file...');
 	try {
 		const { currentDocLang, currentDocPath, rootPath } = getEnvironment();
 
@@ -44,6 +44,7 @@ async function openFileByPath(currentDocLang: LanguageId, currentDocPath: string
 		vscode.window.showTextDocument(doc);
 	} catch {
 		try {
+			if (currentDocLang === LanguageId.typescript) { throw new Error(); }
 			const declarationFilePath = filePath.slice(0, filePath.length - 2) + 'd.ts';
 			const doc = await vscode.workspace.openTextDocument(declarationFilePath);
 			vscode.window.showTextDocument(doc);
@@ -54,7 +55,7 @@ async function openFileByPath(currentDocLang: LanguageId, currentDocPath: string
 }
 
 function getPathsFromConfig(configFile: vscode.TextDocument, rootPath: string) {
-	const json = JSON.parse(configFile.getText());
+	const json = CommentJSON.parse(configFile.getText());
 	const paths: {[key: string]: string} = {
 		outDir: json.compilerOptions?.outDir ?? '.',
 		rootDir: json.compilerOptions?.rootDir ?? '.',
