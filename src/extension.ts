@@ -38,7 +38,13 @@ async function openFileByPath(currentDocLang: LanguageId, currentDocPath: string
 		rootDir = buffer;
 		fileExtension = '.ts';
 	}
-	const filePath = outDir + currentDocPath.replace(rootDir, '').split('.')[0] + fileExtension;
+	let currentDocRelativePath = currentDocPath.replace(rootDir, '').split('.');
+	if (currentDocRelativePath.length > 2 && 
+		currentDocRelativePath[currentDocRelativePath.length - 2] === 'd') {
+			currentDocRelativePath.pop();
+	}
+	currentDocRelativePath.pop();
+	const filePath = outDir + currentDocRelativePath.join('.') + fileExtension;
 	try {
 		const doc = await vscode.workspace.openTextDocument(filePath);
 		vscode.window.showTextDocument(doc);
