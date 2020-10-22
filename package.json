@@ -1,7 +1,15 @@
 {
 	"name": "openrelatedjsts",
+	"author": {
+		"name": "Kyle Jones",
+		"email": "KyleJonesWinsted@gmail.com"
+	},
+	"publisher": "kylejoneswinsted",
 	"displayName": "OpenRelatedJSTS",
 	"description": "Open the Javascript file associated with a Typescript and vice versa.",
+	"repository": {
+		"url": "https://github.com/KyleJonesWinsted/openrelatedjsts"
+	},
 	"version": "0.0.1",
 	"engines": {
 		"vscode": "^1.49.0"
