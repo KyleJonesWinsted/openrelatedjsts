@@ -94,10 +94,10 @@ function getEnvironment(): { currentDocLang: LanguageId, currentDocPath: string,
 	const activeTextEditor = vscode.window.activeTextEditor;
 	if (!activeTextEditor) { throw new Error('No currently active text editor.'); }
 	const currentDocLang = getDocLanguage(activeTextEditor);
-	const currentDocPath = activeTextEditor.document.uri.fsPath;
+	const currentDocPath = activeTextEditor.document.uri.path;
 	const folders = vscode.workspace.workspaceFolders;
 	if (!folders || folders.length < 1) { throw new Error('Unable to open current workspace folder'); }
-	const rootPath = folders[0].uri.fsPath;
+	const rootPath = folders[0].uri.path;
 	return { currentDocLang, currentDocPath, rootPath };
 }
 
