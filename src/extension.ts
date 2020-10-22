@@ -38,12 +38,11 @@ async function openFileByPath(currentDocLang: LanguageId, currentDocPath: string
 		rootDir = buffer;
 		fileExtension = '.ts';
 	}
-	let currentDocRelativePath = currentDocPath.replace(rootDir, '').split('.');
-	if (currentDocRelativePath.length > 2 && 
-		currentDocRelativePath[currentDocRelativePath.length - 2] === 'd') {
-			currentDocRelativePath.pop();
+	const fileExtensions = ['ts', 'js', 'd', 'map'];
+	const currentDocRelativePath = currentDocPath.replace(rootDir, '').split('.');
+	while (fileExtensions.includes(currentDocRelativePath[currentDocRelativePath.length - 1])) {
+		currentDocRelativePath.pop();
 	}
-	currentDocRelativePath.pop();
 	const filePath = outDir + currentDocRelativePath.join('.') + fileExtension;
 	try {
 		const doc = await vscode.workspace.openTextDocument(filePath);
@@ -67,9 +66,19 @@ function getPathsFromConfig(configFile: vscode.TextDocument, rootPath: string) {
 		rootDir: json.compilerOptions?.rootDir ?? '.',
 	};
 	Object.keys(paths).forEach(key => {
-		const value = paths[key];
-		if (value[0] === '.') {
-			paths[key] = rootPath + value.slice(1, value.length);
+		let value = paths[key];
+		switch (value[0]) {
+			case '.':
+				paths[key] = rootPath + value.slice(1, value.length);
+				break;
+			case '/':
+				break;
+			default:
+				paths[key] = rootPath + '/' + value;
+		}
+		if (value[0] === '.') { value = value.slice(2); };
+		if (value[0] !== '/') {
+			paths[key] = `${rootPath}/${value}`;
 		}
 	});
 	return paths;
