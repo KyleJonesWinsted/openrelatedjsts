@@ -13,4 +13,4 @@ Reads the root and output directories from tsconfig.json (if one exists) and ope
 
 ### 1.0.0
 
--Initial release
+* Initial release

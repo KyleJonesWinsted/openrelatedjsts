@@ -6,7 +6,7 @@
 	},
 	"icon": "openrelatedjsts_icon.png",
 	"publisher": "kylejoneswinsted",
-	"displayName": "OpenRelatedJSTS",
+	"displayName": "Open Related JS/TS",
 	"description": "Open the Javascript file associated with a Typescript and vice versa.",
 	"repository": {
 		"url": "https://github.com/KyleJonesWinsted/openrelatedjsts"
@@ -27,6 +27,13 @@
 			{
 				"command": "openrelatedjsts.openFile",
 				"title": "Open Related JS/TS File"
+			}
+		],
+		"keybindings": [
+			{
+				"command": "openrelatedjsts.openFile",
+				"key": "ctrl+k j",
+				"mac": "cmd+k j"
 			}
 		]
 	},
