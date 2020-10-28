@@ -1,6 +1,6 @@
 # Open Related - JS/TS
 
-Open the Javascript file associated with a Typescript and vice versa.
+Open the Javascript file associated with a Typescript file and vice versa.
 
 ## Features
 

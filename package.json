@@ -4,6 +4,7 @@
 		"name": "Kyle Jones",
 		"email": "KyleJonesWinsted@gmail.com"
 	},
+	"icon": "./openrelatedjsts_icon.png",
 	"publisher": "kylejoneswinsted",
 	"displayName": "OpenRelatedJSTS",
 	"description": "Open the Javascript file associated with a Typescript and vice versa.",
