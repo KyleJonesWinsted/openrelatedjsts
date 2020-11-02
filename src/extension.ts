@@ -11,16 +11,16 @@ export function activate(context: vscode.ExtensionContext) {
 
 async function openRelated() {
 	try {
-		const { currentDocLang, currentDocPath, rootPath } = getEnvironment();
+		const { currentDocLang, currentDocPath } = getEnvironment();
 
-		const configFile: vscode.TextDocument | null = await getConfigFile(currentDocPath);
+		const tsConfig = await getConfigFile(currentDocPath);
 
-		if (!configFile) {
+		if (!tsConfig.document) {
 			await openFileByNameOnly(currentDocLang, currentDocPath);
 			return;
 		}
 
-		const { outDir, rootDir } = getPathsFromConfig(configFile, rootPath);
+		const { outDir, rootDir } = getPathsFromConfig(tsConfig);
 
 		await openFileByPath(currentDocLang, currentDocPath, outDir, rootDir);
 		
@@ -59,8 +59,10 @@ async function openFileByPath(currentDocLang: LanguageId, currentDocPath: string
 	}
 }
 
-function getPathsFromConfig(configFile: vscode.TextDocument, rootPath: string) {
-	const json = CommentJSON.parse(configFile.getText());
+function getPathsFromConfig(tsConfig: IConfigFile) {
+	if (!tsConfig.document) { throw new Error('Missing tsconfig.json'); }
+	const json = CommentJSON.parse(tsConfig.document.getText());
+	const rootPath = tsConfig.docPath;
 	const paths: {[key: string]: string} = {
 		outDir: json.compilerOptions?.outDir ?? '.',
 		rootDir: json.compilerOptions?.rootDir ?? '.',
@@ -84,7 +86,7 @@ function getPathsFromConfig(configFile: vscode.TextDocument, rootPath: string) {
 	return paths;
 }
 
-async function getConfigFile(currentDocPath: string): Promise<vscode.TextDocument | null> {
+async function getConfigFile(currentDocPath: string): Promise<IConfigFile> {
 	let pathComponents = currentDocPath.split('/');
 	let doc: vscode.TextDocument | null = null;
 	while (pathComponents.length > 0 && doc === null) {
@@ -96,18 +98,18 @@ async function getConfigFile(currentDocPath: string): Promise<vscode.TextDocumen
 			continue;
 		}
 	}
-	return doc;
+	return {
+		document: doc,
+		docPath: pathComponents.join('/'),
+	};
 }
 
-function getEnvironment(): { currentDocLang: LanguageId, currentDocPath: string, rootPath: string } {
+function getEnvironment(): { currentDocLang: LanguageId, currentDocPath: string } {
 	const activeTextEditor = vscode.window.activeTextEditor;
 	if (!activeTextEditor) { throw new Error('No currently active text editor.'); }
 	const currentDocLang = getDocLanguage(activeTextEditor);
 	const currentDocPath = activeTextEditor.document.uri.path;
-	const folders = vscode.workspace.workspaceFolders;
-	if (!folders || folders.length < 1) { throw new Error('Unable to open current workspace folder'); }
-	const rootPath = folders[0].uri.path;
-	return { currentDocLang, currentDocPath, rootPath };
+	return { currentDocLang, currentDocPath };
 }
 
 async function openFileByNameOnly(currentDocLang: LanguageId, currentDocPath: string) {
@@ -144,6 +146,11 @@ async function getMatchingFiles(currentDocLang: LanguageId, currentDocPath: stri
 enum LanguageId {
 	typescript = 'typescript',
 	javascript = 'javascript',
+}
+
+interface IConfigFile {
+	document: vscode.TextDocument | null;
+	docPath: string;
 }
 
 export function deactivate() {}
